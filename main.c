@@ -10,6 +10,8 @@
 #define IMAG 1
 
 #define WINDOW 2048
+#define SPECTRUM_SIZE WINDOW/2 + 1
+#define SAMPLING_RATE 44100
 #define OVERLAP 0.1
 
 // #define CUT_LOW_RATE 0.03
@@ -26,17 +28,31 @@
 
 double maxAmp, minAmp;
 
+float freq2rate (int frequency)
+{
+  return (float)frequency/((float)SAMPLING_RATE/2);
+}
+
 int main(int argc, char **argv){
 
   float pre_amp = strtof(argv[3],NULL);
   float reduce_low_rate = strtof(argv[4],NULL);
-  float cut_low_rate = strtof(argv[5],NULL);
+  float cut_low_rate = freq2rate(atoi(argv[5]));
   float reduce_mid_rate = strtof(argv[6],NULL);
-  float cut_high_rate = strtof(argv[7],NULL);
+  float cut_high_rate = freq2rate(atoi(argv[7]));
   float reduce_high_rate = strtof(argv[8],NULL);
   int shift_val = atoi(argv[9]);
   float shift_mul = strtof(argv[10],NULL);
   float post_amp = strtof(argv[11],NULL);
+
+  if(cut_high_rate < cut_low_rate ||
+     reduce_high_rate < 0 ||
+     reduce_mid_rate < 0 ||
+     reduce_low_rate < 0)
+  {
+    printf("INPUT ERROR\n");
+    return 1;
+  }
 
   FILE *f=fopen(argv[1],"rb");
   int16_t *buf=malloc(10000000);
@@ -76,7 +92,7 @@ int main(int argc, char **argv){
     //   printf("\n");
     // }
 
-    for (i = 0; i < WINDOW; i++)
+    for (i = SPECTRUM_SIZE; i < WINDOW; i++)
     {
       if(cabs(mid[i]) < minAmp)
         minAmp = cabs(mid[i]);
@@ -84,22 +100,18 @@ int main(int argc, char **argv){
         maxAmp = cabs(mid[i]);
     }
 
-    for (i = 0; i < (int)(WINDOW*cut_low_rate); i += 1)
+    for (i = 0; i < (int)(cut_low_rate*SPECTRUM_SIZE); i += 1)
     {
-      // mid[i] *= 0;
       mid[i] *= reduce_low_rate;
     }
 
-    for (i = (int)(WINDOW*cut_low_rate); i < (int)(WINDOW*cut_high_rate); i += 1)
+    for (i = (int)(cut_low_rate*SPECTRUM_SIZE); i < (int)(cut_high_rate*SPECTRUM_SIZE); i += 1)
     {
-      // mid[i] *= 0;
       mid[i] *= reduce_mid_rate;
     }
 
-    for (i = (int)(WINDOW*cut_high_rate); i < (WINDOW); i += 1)
+    for (i = (int)(cut_high_rate*SPECTRUM_SIZE); i < (SPECTRUM_SIZE); i += 1)
     {
-      // mid[i] = 20;
-      // mid[i] = 1/cimag(mid[i]) + cimag(mid[i])*I;
       mid[i] *= reduce_high_rate;
     }
 
@@ -107,7 +119,6 @@ int main(int argc, char **argv){
 
     for (i = 0; i < WINDOW; i++)
     {
-      // out_buf[q+i] += (int16_t)(out[i]*MAX_INT/WINDOW);
       out_buf[q+i] += (int16_t)(out[i] / WINDOW * OVERLAP);
     }
   }
@@ -119,7 +130,6 @@ int main(int argc, char **argv){
 
   for (i = 44; i < size; i++)
   {
-    // out_buf[i] *= OVERLAP;
     out_buf[i] *= post_amp;
   }
 
