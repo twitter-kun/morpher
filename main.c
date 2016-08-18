@@ -92,13 +92,13 @@ int main(int argc, char **argv){
     //   printf("\n");
     // }
 
-    for (i = SPECTRUM_SIZE; i < WINDOW; i++)
-    {
-      if(cabs(mid[i]) < minAmp)
-        minAmp = cabs(mid[i]);
-      else if (cabs(mid[i]) > maxAmp)
-        maxAmp = cabs(mid[i]);
-    }
+    // for (i = SPECTRUM_SIZE; i < WINDOW; i++)
+    // {
+    //   if(cabs(mid[i]) < minAmp)
+    //     minAmp = cabs(mid[i]);
+    //   else if (cabs(mid[i]) > maxAmp)
+    //     maxAmp = cabs(mid[i]);
+    // }
 
     for (i = 0; i < (int)(cut_low_rate*SPECTRUM_SIZE); i += 1)
     {
